@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Product, useData } from "@/context/DataContext";
 
 type CartItem = {
@@ -10,6 +11,7 @@ type CartItem = {
   name: string;
   price: number;
   quantity: number;
+  imageUrl?: string;
 };
 
 const TAX_RATE = 0;
@@ -80,6 +82,7 @@ export default function PosPage() {
           name: product.name,
           price: product.price,
           quantity: requestedQty,
+          imageUrl: product.imageUrl,
         },
       ];
     });
@@ -175,6 +178,7 @@ export default function PosPage() {
         name: item.name,
         quantity: item.quantity,
         price: item.price,
+        imageUrl: item.imageUrl,
       })),
       subtotal: totals.subtotal,
       tax: totals.tax,
@@ -308,19 +312,30 @@ export default function PosPage() {
                       }`}
                   >
                     <div className="w-full">
-                      <div className="mb-2 flex items-start justify-between">
-                        <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600 group-hover:bg-indigo-100 group-hover:text-indigo-700 transition-colors">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                          </svg>
-                        </div>
-                        <span className="text-xs font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                      {/* Product Image or Icon */}
+                      <div className="mb-3 flex items-center justify-center">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="h-20 w-20 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="rounded-lg bg-indigo-50 p-3 text-indigo-600 group-hover:bg-indigo-100 group-hover:text-indigo-700 transition-colors">
+                            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-semibold text-slate-900 line-clamp-2 leading-tight text-sm">
+                          {product.name}
+                        </h3>
+                        <span className="text-xs font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded ml-1">
                           {product.productCode}
                         </span>
                       </div>
-                      <h3 className="font-semibold text-slate-900 line-clamp-2 leading-tight">
-                        {product.name}
-                      </h3>
                     </div>
                     <div className="w-full flex items-end justify-between mt-2">
                       <p className="text-lg font-bold text-slate-900">

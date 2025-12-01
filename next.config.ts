@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  images: {
+    remotePatterns: [],
+    // Allow data URIs for base64 images
+    dangerouslyAllowSVG: true,
+    unoptimized: false,
+  },
   /* config options here */
 };
 

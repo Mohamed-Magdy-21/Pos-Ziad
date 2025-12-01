@@ -1,13 +1,16 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, useRef } from "react";
+import Image from "next/image";
 import { Product, useData } from "@/context/DataContext";
+import { processImageFile } from "@/lib/imageUtils";
 
 type ProductForm = {
   productCode: string;
   name: string;
   price: string;
   stockQuantity: string;
+  imageUrl: string;
 };
 
 const emptyForm: ProductForm = {
@@ -15,6 +18,7 @@ const emptyForm: ProductForm = {
   name: "",
   price: "",
   stockQuantity: "",
+  imageUrl: "",
 };
 
 export default function InventoryPage() {
@@ -29,6 +33,9 @@ export default function InventoryPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [stockProductId, setStockProductId] = useState<string>("");
   const [stockMode, setStockMode] = useState<"add" | "deduct">("add");
@@ -80,6 +87,7 @@ export default function InventoryPage() {
       name: form.name.trim(),
       price: parsedPrice,
       stockQuantity: parsedQuantity,
+      imageUrl: form.imageUrl || undefined,
     };
 
     if (editingId) {
@@ -92,6 +100,7 @@ export default function InventoryPage() {
 
     setForm(emptyForm);
     setEditingId(null);
+    setImagePreview("");
   };
 
   const handleEdit = (product: Product) => {
@@ -101,7 +110,9 @@ export default function InventoryPage() {
       name: product.name,
       price: product.price.toString(),
       stockQuantity: product.stockQuantity.toString(),
+      imageUrl: product.imageUrl || "",
     });
+    setImagePreview(product.imageUrl || "");
     setFeedback(`Editing ${product.name}`);
   };
 
@@ -109,6 +120,40 @@ export default function InventoryPage() {
     setForm(emptyForm);
     setEditingId(null);
     setFeedback(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingImage(true);
+    setFeedback(null);
+
+    try {
+      const base64 = await processImageFile(file);
+      setForm((prev) => ({ ...prev, imageUrl: base64 }));
+      setImagePreview(base64);
+      setFeedback("Image uploaded successfully.");
+    } catch (error) {
+      setFeedback(
+        error instanceof Error ? error.message : "Failed to process image."
+      );
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setForm((prev) => ({ ...prev, imageUrl: "" }));
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setFeedback("Image removed.");
   };
 
   const handleStockSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -273,6 +318,65 @@ export default function InventoryPage() {
                 />
               </div>
             </div>
+
+            {/* Image Upload Section */}
+            <div>
+              <label className="text-sm font-medium text-slate-700 ml-1">
+                Product Image (Optional)
+              </label>
+              <div className="mt-2 space-y-3">
+                {imagePreview ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={imagePreview}
+                      alt="Product preview"
+                      width={120}
+                      height={120}
+                      className="rounded-lg border-2 border-slate-200 object-cover"
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-sm font-semibold text-indigo-600 hover:text-indigo-800"
+                      >
+                        Change Image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="text-sm font-semibold text-rose-600 hover:text-rose-800"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isProcessingImage}
+                    className="inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 transition-all hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-50"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {isProcessingImage ? "Processing..." : "Upload Image"}
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                <p className="text-xs text-slate-500">
+                  JPG, PNG, or WebP. Max 2MB. Will be resized to 400x400px.
+                </p>
+              </div>
+            </div>
+
             <button
               type="submit"
               className="w-full inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-500 hover:scale-[1.02] hover:shadow-indigo-500/30 active:scale-[0.98]"
@@ -378,6 +482,9 @@ export default function InventoryPage() {
             <thead>
               <tr>
                 <th className="px-3 py-2.5 text-base font-semibold text-slate-500">
+                  Image
+                </th>
+                <th className="px-3 py-2.5 text-base font-semibold text-slate-500">
                   Product
                 </th>
                 <th className="px-3 py-2.5 text-base font-semibold text-slate-500">
@@ -395,6 +502,23 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-slate-100">
               {products.map((product) => (
                 <tr key={product.id}>
+                  <td className="px-3 py-2.5">
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        width={40}
+                        height={40}
+                        className="rounded-lg border border-slate-200 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-3 py-2.5 text-base font-semibold text-slate-800">
                     {product.name}
                   </td>
@@ -427,7 +551,7 @@ export default function InventoryPage() {
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td className="px-3 py-4 text-center text-slate-500" colSpan={5}>
+                  <td className="px-3 py-4 text-center text-slate-500" colSpan={6}>
                     No products yet. Add your first item above.
                   </td>
                 </tr>
