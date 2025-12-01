@@ -40,6 +40,18 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md">
       <h2 className="text-2xl font-semibold mb-4">Sign in</h2>
+      
+      {/* Dev credentials hint */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs text-blue-800">
+            <strong>Demo Credentials (Development Only):</strong><br />
+            Username: <code className="bg-blue-100 px-1 rounded">admin</code><br />
+            Password: <code className="bg-blue-100 px-1 rounded">admin123</code>
+          </p>
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
         <div>
           <label className="block text-sm font-medium text-slate-700">Username</label>
