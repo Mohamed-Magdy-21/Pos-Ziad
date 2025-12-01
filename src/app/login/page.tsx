@@ -47,7 +47,7 @@ export default function LoginPage() {
           <p className="text-xs text-blue-800">
             <strong>Demo Credentials (Development Only):</strong><br />
             Username: <code className="bg-blue-100 px-1 rounded">admin</code><br />
-            Password: <code className="bg-blue-100 px-1 rounded">admin123</code>
+            Password: <code className="bg-blue-100 px-1 rounded">123</code>
           </p>
         </div>
       )}
