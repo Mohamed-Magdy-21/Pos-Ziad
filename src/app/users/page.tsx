@@ -101,11 +101,34 @@ export default function UsersPage() {
             <tbody>
               {users.map((u) => (
                 <tr key={u.id} className="border-t">
-                  <td className="py-2">{u.username}</td>
-                  <td className="py-2">{u.name}</td>
-                  <td className="py-2">{u.role}</td>
-                  <td className="py-2">{u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
-                </tr>
+                      <td className="py-2">{u.username}</td>
+                      <td className="py-2">{u.name}</td>
+                      <td className="py-2">{u.role}</td>
+                      <td className="py-2">{u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
+                      <td className="py-2">
+                        <button
+                          onClick={async () => {
+                            const newPass = window.prompt('Enter new password for ' + u.username + ' (leave empty to cancel)');
+                            if (!newPass) return;
+                            try {
+                              const res = await fetch('/api/users', {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: u.id, newPassword: newPass }),
+                              });
+                              if (!res.ok) throw new Error('Reset failed');
+                              setMessage('Password updated for ' + u.username + '.');
+                            } catch (err) {
+                              console.error(err);
+                              setMessage('Failed to update password.');
+                            }
+                          }}
+                          className="rounded bg-amber-500 px-3 py-1 text-white text-sm"
+                        >
+                          Reset Password
+                        </button>
+                      </td>
+                    </tr>
               ))}
             </tbody>
           </table>

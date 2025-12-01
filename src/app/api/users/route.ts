@@ -33,3 +33,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token || (token as any).role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  try {
+    const body = await req.json();
+    const { id, username, newPassword } = body;
+    if (!id && !username) {
+      return NextResponse.json({ error: 'Missing user identifier' }, { status: 400 });
+    }
+
+    if (!newPassword) {
+      return NextResponse.json({ error: 'Missing newPassword' }, { status: 400 });
+    }
+
+    const bcrypt = await import('bcryptjs');
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    const where = id ? { id } : { username };
+    const updated = await prisma.user.update({ where, data: { password: hashed } });
+    return NextResponse.json({ ok: true, id: updated.id });
+  } catch (error) {
+    console.error('Reset user password error', error);
+    return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
+  }
+}
