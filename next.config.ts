@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
     unoptimized: false,
   },
   serverExternalPackages: ['@prisma/client', 'prisma'],
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['app-one-production.up.railway.app', 'localhost:3000'],
+    },
+  },
   /* config options here */
 };
 
